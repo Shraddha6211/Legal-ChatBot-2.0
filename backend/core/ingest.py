@@ -4,8 +4,9 @@ import re
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_openai import OpenAIEmbeddings
 from langchain.schema import Document
-from backend.db.pinecone_client import get_pinecone_index
+from backend.db.supabase_client import get_supabase_client
 from config import settings
+
 
 def load_pdf(filepath: str) -> str:
     """
@@ -128,11 +129,11 @@ def chunk_by_article(
     print(f"Total meaningful documents: {len(documents)}")
     return documents
 
-# UPSERT TO PINECONE
-# Documents → Embeddings → Pinecone
-def upsert_to_pinecone(documents: list, index, batch_size: int = 100) -> None:
+# INSERT TO SUPABASE
+# Documents → Embeddings → Supabase
+def upsert_to_supabase(documents: list, batch_size: int = 100) -> None:
     """
-    Generate embeddings and upsert to Pinecone
+    Generate embeddings and upsert to Supabase
     """
     embeddings_model = OpenAIEmbeddings(
         model=settings.embedding_model,
@@ -149,42 +150,42 @@ def upsert_to_pinecone(documents: list, index, batch_size: int = 100) -> None:
     embeddings = embeddings_model.embed_documents(texts)
     print(f"Embeddings generated: {len(embeddings)}")
     
-    # step 3: prepare vectors for Pinecone
-    # Pinecone upsert format:
-    # [
-    #   {
-    #     "id": "article-18",
-    #     "values": [0.023, -0.147...],  ← embedding vector
-    #     "metadata": {...}               ← our metadata!
-    #   }
-    # ]
-    vectors = []
-    for i, (doc, embedding) in enumerate(zip(documents, embeddings)):
-        vectors.append({
-            "id": f"article-{doc.metadata['article_number']}-{i}",
-            "values": embedding,
-            "metadata": doc.metadata
-        })
-    print(f"Prepared {len(vectors)} vectors for upsert")
+    # step 3: get supabase client
     
-    # step 4: upsert to Pinecone in batches
-    # hint: index.upsert(vectors=batch)
-    # hint: batch size = 100
-    total_batches = len(vectors) // batch_size + 1
+    # step 4: Prepare rows for supabase
+    rows = []
+    for i, (doc, embedding) in enumerate(zip(documents, embeddings)):
+        rows.append({
+            "id": f"article-{doc.metadata['article_number']}-{i}",
+            "content": doc.page_content,
+            "embedding": embedding,
+            "article_number": doc.metadata["article_number"],
+            "title": doc.metadata["title"],
+            "part_number": doc.metadata["part_number"],
+            "part_name": doc.metadata["part_name"],
+            "source": doc.metadata["source"],
+            "page_number": doc.metadata["page_number"],
+            "chunk_length": doc.metadata["chunk_length"],
+            "word_count": doc.metadata["word_count"]
+        })
 
-    for i in range(0, len(vectors), batch_size):
-        batch = vectors[i : i + batch_size]
-        index.upsert(vectors= batch)
+    # step 5: upsert in batches:
+    total_batches = (len(rows) // batch_size) + 1
+    supabase = get_supabase_client()
+
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i : i + batch_size]
+        supabase.table("documents").upsert(batch).execute()
         print(f"Upserted batch {i//batch_size + 1}/{total_batches}")
 
-    print(f" All {len(vectors)} vectors upserted to Pinecone!")
+    print(f"All {len(rows)} documents upserted to Supabase!")
 
 
 ## MAIN FUNCTION 
 def run_ingestion(pdf_path: str = settings.pdf_path):
     """
     Complete ingestion pipeline:
-    PDF → chunks → embeddings → Pinecone
+    PDF → chunks → embeddings → Supabase
     """
     print("=== Starting Ingestion Pipeline ===")
     
@@ -209,10 +210,9 @@ def run_ingestion(pdf_path: str = settings.pdf_path):
         print(f"Preview: {doc.page_content[:100]}")
         print()
     
-    # step 4: upsert to Pinecone
-    print("Upserting to Pinecone...")
-    index = get_pinecone_index()
-    upsert_to_pinecone(documents, index)
+    # step 4: upsert to Supabase
+    print("Upserting to Supabase...")
+    upsert_to_supabase(documents)
     
     print("=== Ingestion Complete! ===")
     return len(documents)
