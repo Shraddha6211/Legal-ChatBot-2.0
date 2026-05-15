@@ -1,39 +1,39 @@
 # API Framework
-fastapi==0.115.0
-uvicorn==0.30.0
+fastapi
+uvicorn
 
 # LangChain ecosystem
-langchain==0.3.0
-langchain-openai==0.2.0
-langchain-pinecone==0.2.0
-langchain-community==0.3.0
-
-# Vector Database
-pinecone-client==5.0.0
-
-# Memory
-redis==5.0.0
+langchain==0.3.25
+langchain-core==0.3.58
+langchain-community==0.3.23
+langchain-openai==0.3.16
 
 # OpenAI
-openai==1.50.0
+openai==1.68.2
+
+# Vector Database
+supabase==2.7.0
+
+# Memory
+redis
 
 # PDF Processing
-pypdf==5.0.0
-pdfplumber==0.11.0
+pypdf
+pdfplumber
 
 # Settings Management
-pydantic-settings==2.5.0
-python-dotenv==1.0.0
+pydantic-settings
+python-dotenv
 
 # Frontend
-streamlit==1.39.0
+streamlit
 
 # HTTP
-requests==2.32.0
+requests
 
 # Data
-numpy==1.26.0
+numpy
 
 # Testing & Evaluation
-ragas==0.2.0
-pytest==8.3.0
+ragas
+pytest

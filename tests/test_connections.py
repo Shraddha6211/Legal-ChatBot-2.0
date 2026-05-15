@@ -1,26 +1,28 @@
-from backend.db.pinecone_client import get_pinecone_index
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+from backend.db.supabase_client import get_supabase_client
 from backend.db.redis_client import get_redis_client, save_to_redis, get_from_redis
 
-def test_pinecone():
-    print("Testing Pinecone...")
-    index = get_pinecone_index()
-    print(f"Pinecone index: {index}")
-    print("Pinecone ✅")
+def test_supabase():
+    print("Testing Supabase...")
+    supabase = get_supabase_client()
+    
+    # test if documents table exists
+    result = supabase.table("documents").select("id").limit(1).execute()
+    print(f"Documents table accessible: ✅")
+    print(f"Current rows: {len(result.data)}")
+    print("Supabase ✅")
 
 def test_redis():
-    print("Testing Redis...")
+    print("\nTesting Redis...")
     client = get_redis_client()
-    
-    # test save and get
     save_to_redis(client, "test:key", {"message": "hello!"}, ttl=60)
     result = get_from_redis(client, "test:key")
     print(f"Redis result: {result}")
-    
-    # test missing key
-    missing = get_from_redis(client, "nonexistent:key")
-    print(f"Missing key returns: {missing}")
     print("Redis ✅")
 
 if __name__ == "__main__":
-    test_pinecone()
+    test_supabase()
     test_redis()

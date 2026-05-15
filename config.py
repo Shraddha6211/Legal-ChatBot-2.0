@@ -1,13 +1,13 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
 
+
 class Settings(BaseSettings):
     # API Keys (from .env)
     openai_api_key: str
-    pinecone_api_key: str
-    pinecone_index_name: str = "nepal-constitution"
-    pinecone_environment: str = "us-east-1"
-    redis_url: str = "redis://localhost:6379"
+    supabase_url: str
+    supabase_key: str
+    redis_url: str 
     
     # LLM Config
     llm_model: str = "gpt-4o-mini"
