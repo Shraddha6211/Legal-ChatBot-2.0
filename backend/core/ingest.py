@@ -6,7 +6,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain.schema import Document
 from backend.db.supabase_client import get_supabase_client
 from config import settings
-import supabase
+
 
 def load_pdf(filepath: str) -> str:
     """
@@ -131,7 +131,7 @@ def chunk_by_article(
 
 # INSERT TO SUPABASE
 # Documents → Embeddings → Supabase
-def upsert_to_supabase(documents: list, index, batch_size: int = 100) -> None:
+def upsert_to_supabase(documents: list, batch_size: int = 100) -> None:
     """
     Generate embeddings and upsert to Supabase
     """
@@ -171,6 +171,7 @@ def upsert_to_supabase(documents: list, index, batch_size: int = 100) -> None:
 
     # step 5: upsert in batches:
     total_batches = (len(rows) // batch_size) + 1
+    supabase = get_supabase_client()
 
     for i in range(0, len(rows), batch_size):
         batch = rows[i : i + batch_size]
