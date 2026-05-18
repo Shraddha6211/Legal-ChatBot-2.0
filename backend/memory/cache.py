@@ -46,8 +46,9 @@ def save_to_cache(
     # step 2: build cache entry dict
     entry = {
         "question": question,
-        "question_embedding": question_embedding,
-        "answer": answer
+        "answer": answer,
+        "question_embedding": question_embedding
+        
     }
     # step 3: save to Redis with TTL
     save_to_redis(redis_client, key, entry, ttl=settings.cache_ttl_seconds)
